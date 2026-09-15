@@ -1,0 +1,43 @@
+-- ============================================================
+-- PATCH DE SÉCURITÉ CRITIQUE — à exécuter en priorité absolue
+-- Supabase > SQL Editor > coller ce script > Run
+-- ============================================================
+--
+-- PROBLÈME :
+-- La policy "Modifier son profil" (for update using (auth.uid() = id))
+-- vérifie uniquement QUI possède la ligne, pas QUELLES colonnes sont
+-- modifiées. Résultat concret : n'importe quel utilisateur connecté
+-- (même en essai gratuit) peut, en interrogeant directement l'API
+-- Supabase (curl/Postman — pas besoin de passer par le site), exécuter :
+--
+--   PATCH https://<projet>.supabase.co/rest/v1/profiles?id=eq.<son-uuid>
+--   Authorization: Bearer <son-propre-jeton>
+--   { "status": "paid", "is_admin": true }
+--
+-- ...et obtenir un accès payant gratuit ET les droits admin (accès à
+-- /admin-users, à la liste de tous les emails et à leur statut).
+-- C'est une faille critique : elle contourne entièrement Stripe et
+-- le contrôle d'accès admin.
+--
+-- CORRECTION :
+-- Le front-end (vérifié dans index.html) n'a besoin d'aucun accès en
+-- écriture direct à la table "profiles" : toutes les écritures
+-- passent déjà par les fonctions Netlify (check-access, update-user-
+-- status, admin-users), qui utilisent la clé service_role côté
+-- serveur et ne sont donc pas concernées par ce patch. On retire donc
+-- simplement le droit UPDATE du rôle "authenticated" sur cette table.
+-- ============================================================
+
+revoke update on table public.profiles from authenticated;
+
+-- Vérification rapide après exécution (doit renvoyer 0 ligne = aucun
+-- privilège UPDATE restant pour le rôle authenticated) :
+-- select * from information_schema.role_table_grants
+-- where table_name = 'profiles' and grantee = 'authenticated' and privilege_type = 'UPDATE';
+
+-- Si un jour un champ doit redevenir modifiable directement par
+-- l'utilisateur (ex: un futur champ "nom" stocké dans profiles plutôt
+-- que dans user_data), n'ouvrez QUE cette colonne précise, jamais la
+-- table entière :
+--   grant update (nom) on table public.profiles to authenticated;
+-- Ne jamais ré-accorder update sur "status", "is_admin", "trial_end".
