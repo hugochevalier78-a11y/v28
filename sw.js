@@ -12,9 +12,12 @@ self.addEventListener('fetch', event => {
       if(type.includes('text/html') && (path==='/' || path.endsWith('/index.html'))){
         const text=await res.text();
         const injected=text
-          .replace('</head>','<link rel="stylesheet" href="GLOWUP_PREVIEW.css"></head>')
-          .replace('</body>','<script src="V28_FEATURES.js"></script></body>');
-        return new Response(injected,{status:res.status,statusText:res.statusText,headers:res.headers});
+          .replace('</head>','<link rel="stylesheet" href="./GLOWUP_PREVIEW.css?v=28"></head>')
+          .replace('</body>','<script src="./V28_FEATURES.js?v=28"></script></body>');
+        const headers=new Headers(res.headers);
+        headers.delete('content-length');
+        headers.delete('content-encoding');
+        return new Response(injected,{status:res.status,statusText:res.statusText,headers});
       }
       return res;
     }catch(e){return caches.match(req);}
