@@ -1,4 +1,4 @@
-// VestiairePro v28.4 — network first + versioned premium UI injection
+// VestiairePro v28.5 — network first + versioned premium UI injection
 self.addEventListener('install',event=>self.skipWaiting());
 self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));
 self.addEventListener('fetch',event=>{
@@ -12,8 +12,8 @@ self.addEventListener('fetch',event=>{
       if(type.includes('text/html')&&(path==='/'||path.endsWith('/index.html'))){
         const text=await res.text();
         const injected=text
-          .replace('</head>','<link rel="stylesheet" href="./GLOWUP_PREVIEW.css?v=28.4"></head>')
-          .replace('</body>','<script>window.$$=(s,r=document)=>[...r.querySelectorAll(s)];</script><script src="./V28_FEATURES.js?v=28.4"></script></body>');
+          .replace('</head>','<link rel="stylesheet" href="./GLOWUP_PREVIEW.css?v=28.5"></head>')
+          .replace('</body>','<script src="./V28_FEATURES.js?v=28.5"></script></body>');
         const headers=new Headers(res.headers);
         headers.delete('content-length');
         headers.delete('content-encoding');
