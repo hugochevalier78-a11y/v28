@@ -8,7 +8,8 @@ self.addEventListener('fetch', event => {
     try{
       const res=await fetch(req);
       const type=res.headers.get('content-type')||'';
-      if(type.includes('text/html') && new URL(req.url).pathname.endsWith('index.html')){
+      const path=new URL(req.url).pathname;
+      if(type.includes('text/html') && (path==='/' || path.endsWith('/index.html'))){
         const text=await res.text();
         const injected=text
           .replace('</head>','<link rel="stylesheet" href="GLOWUP_PREVIEW.css"></head>')
