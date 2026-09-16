@@ -1,6 +1,21 @@
-// VestiairePro v25 beta pro - network first
+// VestiairePro v28 — network first + feature injection
 self.addEventListener('install', event => self.skipWaiting());
 self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
 self.addEventListener('fetch', event => {
-  event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
+  const req=event.request;
+  if(req.method!=='GET') return;
+  event.respondWith((async()=>{
+    try{
+      const res=await fetch(req);
+      const type=res.headers.get('content-type')||'';
+      if(type.includes('text/html') && new URL(req.url).pathname.endsWith('index.html')){
+        const text=await res.text();
+        const injected=text
+          .replace('</head>','<link rel="stylesheet" href="GLOWUP_PREVIEW.css"></head>')
+          .replace('</body>','<script src="V28_FEATURES.js"></script></body>');
+        return new Response(injected,{status:res.status,statusText:res.statusText,headers:res.headers});
+      }
+      return res;
+    }catch(e){return caches.match(req);}
+  })());
 });
